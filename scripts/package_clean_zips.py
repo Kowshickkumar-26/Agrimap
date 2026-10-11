@@ -3,9 +3,9 @@ import zipfile
 import shutil
 from pathlib import Path
 
-repo_root = Path(r"d:\VIT")
-backend_dir = repo_root / "member1-ml" / "backend"
-frontend_dir = repo_root / "member2-gis" / "frontend"
+repo_root = Path(__file__).resolve().parent.parent
+backend_dir = repo_root / "backend"
+frontend_dir = repo_root / "frontend"
 
 out_backend_zip = repo_root / "backend.zip"
 out_frontend_zip = repo_root / "frontend.zip"

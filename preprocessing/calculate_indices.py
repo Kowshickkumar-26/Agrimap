@@ -35,11 +35,12 @@ def compute_all_indices(
     b03: np.ndarray,
     b04: np.ndarray,
     b08: np.ndarray,
+    b11: Optional[np.ndarray] = None,
     nodata_mask: Optional[np.ndarray] = None,
     nodata_val: float = -9999.0,
 ) -> Dict[str, np.ndarray]:
     """
-    Compute NDVI, EVI, SAVI, NDWI given surface reflectance bands.
+    Compute NDVI, EVI, SAVI, NDWI, and LSWI given surface reflectance bands.
     """
     b02_r = normalize_to_reflectance(b02, nodata_val)
     b03_r = normalize_to_reflectance(b03, nodata_val)
@@ -80,12 +81,24 @@ def compute_all_indices(
     ndwi = safe_divide(ndwi_num, ndwi_den, fill_val=nodata_val)
     ndwi = np.where(~invalid, np.clip(ndwi, -1.0, 1.0), nodata_val)
 
-    return {
+    indices = {
         "NDVI": ndvi.astype(np.float32),
         "EVI": evi.astype(np.float32),
         "SAVI": savi.astype(np.float32),
         "NDWI": ndwi.astype(np.float32),
     }
+
+    # 5. LSWI = (B08 - B11) / (B08 + B11)
+    if b11 is not None:
+        b11_r = normalize_to_reflectance(b11, nodata_val)
+        invalid_lswi = invalid | (b11_r == nodata_val) | np.isnan(b11_r)
+        lswi_num = b08_r - b11_r
+        lswi_den = b08_r + b11_r
+        lswi = safe_divide(lswi_num, lswi_den, fill_val=nodata_val)
+        lswi = np.where(~invalid_lswi, np.clip(lswi, -1.0, 1.0), nodata_val)
+        indices["LSWI"] = lswi.astype(np.float32)
+
+    return indices
 
 
 def process_and_save_indices(
@@ -97,7 +110,7 @@ def process_and_save_indices(
     """
     Calculate and save all indices for all dates, and export summary statistics.
     """
-    print("\n[INDICES] Calculating NDVI, EVI, SAVI, NDWI for all dates...")
+    print("\n[INDICES] Calculating NDVI, EVI, SAVI, NDWI, LSWI for all dates...")
     output_base_dir.mkdir(parents=True, exist_ok=True)
     stats_report_path.parent.mkdir(parents=True, exist_ok=True)
 
@@ -120,7 +133,12 @@ def process_and_save_indices(
         with rasterio.open(bands["B04"]) as src:
             b04 = src.read(1)
 
-        computed = compute_all_indices(b02, b03, b04, b08, nodata_val=nodata_val)
+        b11 = None
+        if "B11" in bands and bands["B11"].exists():
+            with rasterio.open(bands["B11"]) as src:
+                b11 = src.read(1)
+
+        computed = compute_all_indices(b02, b03, b04, b08, b11=b11, nodata_val=nodata_val)
 
         ref_profile.update({
             "dtype": "float32",

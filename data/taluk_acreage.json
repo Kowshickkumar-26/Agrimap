@@ -1,0 +1,22 @@
+[
+  {
+    "taluk": "Ambasamudram",
+    "total_parcels": 1516,
+    "total_area_ha": 2894.02,
+    "total_area_sq_km": 28.9402,
+    "paddy_area_ha": 2670.77,
+    "banana_area_ha": 2.05,
+    "other_area_ha": 221.2,
+    "mean_confidence": 0.476
+  },
+  {
+    "taluk": "Cheranmahadevi",
+    "total_parcels": 858,
+    "total_area_ha": 1180.39,
+    "total_area_sq_km": 11.8039,
+    "paddy_area_ha": 546.47,
+    "banana_area_ha": 565.69,
+    "other_area_ha": 68.23,
+    "mean_confidence": 0.416
+  }
+]

@@ -1,20 +1,26 @@
 """
-VIT_MAPATHON - Member 2 (GIS / Remote Sensing Engineering) Preprocessing Package
-Agricultural Land Parcel and Crop Identification in Tirunelveli District.
+VIT MAPATHON — Member 1 ML / AI Pipeline
+Preprocessing and Data Validation Module
 """
 
-from pathlib import Path
+from .validation import (
+    validate_raster_metadata,
+    validate_raster_alignment,
+    validate_labels_file,
+    validate_study_area,
+    DataNotAvailableError,
+)
+from .feature_loader import FeatureLoader
+from .label_loader import LabelLoader
+from .dataset_builder import DatasetBuilder
 
-# Default Coordinate Reference System for Tirunelveli / UTM Zone 43N
-DEFAULT_CRS = "EPSG:32643"
-
-# Native Sentinel-2 band spatial resolutions
-BAND_RESOLUTIONS = {
-    "B02": 10.0,  # Blue (10m)
-    "B03": 10.0,  # Green (10m)
-    "B04": 10.0,  # Red (10m)
-    "B08": 10.0,  # NIR (10m)
-    "B11": 20.0,  # SWIR-1 (20m)
-    "B12": 20.0,  # SWIR-2 (20m)
-    "SCL": 20.0,  # Scene Classification Layer (20m)
-}
+__all__ = [
+    "validate_raster_metadata",
+    "validate_raster_alignment",
+    "validate_labels_file",
+    "validate_study_area",
+    "DataNotAvailableError",
+    "FeatureLoader",
+    "LabelLoader",
+    "DatasetBuilder",
+]

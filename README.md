@@ -1,98 +1,145 @@
-# VIT MAPATHON — Agricultural Land Parcel and Crop Identification
-
-## Problem Statement 1: Agricultural Land Parcel and Crop Identification
-Automated identification and differentiation of agricultural land parcels, **Paddy** (rice), and **Banana** plantations in **Tirunelveli District** (covering **Ambasamudram Taluk** and **Cheranmahadevi Taluk**), Tamil Nadu, India, using openly available Sentinel-2 Level-2A surface reflectance satellite imagery.
-- **Minimum Study Area**: $\ge 20 \text{ km}^2$ (Actual study area covered: $240.65 \text{ km}^2$)
-- **Target Classes**: `Paddy`, `Banana`, `Other`
-- **Primary Model**: Random Forest Classifier (`sklearn.ensemble.RandomForestClassifier`, 88.14% holdout test accuracy, 83.78% 5-fold CV)
-- **Team Size**: 2 Members (Balanced Full-Stack AI & Geospatial Division)
+# 🌾 AgriMap — Agricultural Land Parcel and Crop Identification Platform
+### VIT MAPATHON 2026 — Geospatial AI & Aerial Computer Vision Solution
 
 ---
 
-## 2-Member Collaborative Architecture
+## 📌 Problem Statement Overview
+Automated identification and classification of agricultural land parcels, **Paddy** (rice), and **Banana** plantations in **Tirunelveli District** (covering **Ambasamudram Taluk** and **Cheranmahadevi Taluk**), Tamil Nadu, India, using multi-temporal Sentinel-2 Level-2A surface reflectance satellite imagery and high-resolution aerial computer vision.
+
+- **Study Area Covered**: $240.65 \text{ km}^2$ (Ambasamudram & Cheranmahadevi Taluks)
+- **Target Classes**: `Paddy`, `Banana`, `Other (Fallow/Non-Crop)`
+- **Core AI Models**:
+  - **Crop Classifier**: Multi-Temporal Random Forest & Tuned XGBoost (91.53% Accuracy, 91.14% Macro F1)
+  - **Plant & Tree Counter**: YOLOv8 Aerial Computer Vision (0.25m GSD micro-canopy detection)
+  - **Agri-AI Chatbot**: Google Gemini 2.5 Flash with localized domain grounding & zero hardcoding
+  - **Disaster Risk Engine**: Multi-hazard flood inundation and crop damage valuation (SDRF norms)
+
+---
+
+## 🏛️ Unified System Architecture
 
 ```
-[ Sentinel-2 L2A Imagery (4 Multi-temporal Dates) ]
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│  MEMBER 2 — GIS, Remote Sensing & Web GIS Frontend         │
-│  - AOI Definition: Ambasamudram & Cheranmahadevi (240.65km²)│
-│  - SCL Cloud & Shadow Masking (>99.9% valid pixels)         │
-│  - 20m -> 10m Resampling in EPSG:32643 (UTM Zone 43N)       │
-│  - 60-Layer Temporal Feature Stack (Bands & Indices)        │
-│  - 293 Cadastral Parcels Delineation & Zonal Extraction     │
-│  - React + Leaflet Web GIS Dashboard (member2-gis/frontend) │
-│  - Bi-seasonal temporal comparison UI & Agri-AI Chatbot UI  │
-│  - Deliverables: ml_training_dataset.csv & Interactive UI   │
-└─────────────────────────────────────────────────────────────┘
-                         ↕ (Bi-directional Data & API Contract)
-┌─────────────────────────────────────────────────────────────┐
-│  MEMBER 1 — AI / Machine Learning & Backend Systems        │
-│  - Train Tuned Random Forest Classifier (n_estimators=200)  │
-│  - Stratified & Group Cross-Validation (Zero Data Leakage)  │
-│  - Dynamic Metrics: Accuracy (88.14%), F1-Score (87.06%)    │
-│  - Feature Importance Rankings & Confusion Matrix Heatmap   │
-│  - Parcel Inference & Spatial GeoJSON Output Generation    │
-│  - FastAPI REST API (member1-ml/backend: /parcels, /stats)  │
-│  - Automated Agricultural PDF Report Generator & AI Advisory│
-│  - PostGIS Database Schema & Ingestion Pipelines            │
-└─────────────────────────────────────────────────────────────┘
+                                 [ Sentinel-2 Multi-Temporal L2A Imagery ]
+                                                     ↓
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  🛰️ GEOSPATIAL & REMOTE SENSING PREPROCESSING (preprocessing/)                                         │
+│  - SCL Scene Classification cloud & shadow masking (>99.9% valid pixels)                               │
+│  - 20m -> 10m band resampling in EPSG:32643 (UTM Zone 43N)                                             │
+│  - Multi-temporal 60-layer stack (NDVI, NDWI, EVI, SAVI, NDRE Red-Edge)                                │
+│  - Cadastral Parcel extraction (850 contiguous agricultural parcels across 2 Taluks)                   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                     ↓
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  🧠 MACHINE LEARNING & COMPUTER VISION ENGINE (ml/)                                                    │
+│  - Stratified & Group Cross-Validation (Zero Spatial Autocorrelation Leakage)                          │
+│  - Tuned Random Forest (n_estimators=200) & XGBoost Classifier (88.14% - 91.53% Accuracy)             │
+│  - YOLOv8 Aerial Tree & Plant Counter (individual plant density & cluster tracking)                    │
+│  - PostGIS & SQLite Time-Series Ingestion Pipeline (Phase 2 Multi-Season Monitoring)                   │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
+                                                     ↕
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────┐
+│  ⚡ FULL-STACK PLATFORM & INTERACTIVE WEB GIS (backend/ & frontend/)                                   │
+│  - FastAPI High-Performance Spatial REST API (Parcels, Metrics, Stats, Hazards, Tree-Counts, PDF)      │
+│  - React + Leaflet + Vite Web GIS Dashboard with real-time layer toggles & analytics                   │
+│  - Conversational AgriBot powered by Google Gemini 2.5 Flash for parcel-level agronomic advisories     │
+│  - Automated publication-quality Agricultural Cadastral PDF Report Generator                           │
+└────────────────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 👥 Team Roles & Directory Ownership
+## 📁 Clean Unified Directory Structure
 
-| Member | Focus Area | Primary Directory | Working Branch | Key Responsibilities |
-|---|---|---|---|---|
-| **Member 1** | AI / Machine Learning & Backend Systems | `member1-ml/` | `member1-ml` | Random Forest training, evaluation metrics, parcel inference, `classified_parcels.geojson`, FastAPI REST API backend (`member1-ml/backend/`), PostGIS spatial database schema, automated PDF report generation, and automated backend test suite. |
-| **Member 2** | GIS / Remote Sensing & Web GIS Frontend | `member2-gis/`, `data/` | `member2-gis` | S2 L2A preprocessing, cloud masking, 60-layer temporal stack, parcel extraction, `ml_training_dataset.csv`, React + Leaflet GIS frontend dashboard (`member2-gis/frontend/`), temporal analytics UI, and cartographic verification maps. |
+```
+VIT/
+├── backend/                  # FastAPI Spatial REST API Backend
+│   ├── data/                 # Data artifacts & local GeoJSON fallback
+│   ├── reports/              # Automated PDF report generator
+│   ├── routers/              # API routers (parcels, statistics, analysis, monitoring, layers)
+│   ├── services/             # Gemini AI chatbot service & domain calculation engine
+│   ├── database.py           # Database connection & artifact loader
+│   ├── timeseries_db.py      # TimeSeriesDB SQLite & PostGIS storage
+│   └── main.py               # FastAPI application entrypoint
+├── frontend/                 # React + Leaflet Web GIS Dashboard (Vite)
+│   ├── public/               # Public maps, GeoJSON layers, assets
+│   ├── src/                  # React components, styles, reactive state
+│   ├── package.json
+│   └── vite.config.js
+├── ml/                       # Machine Learning & Aerial Computer Vision
+│   ├── classification/       # Crop classification models & predictors
+│   ├── features/             # Advanced vegetation indices & phenology
+│   ├── pipelines/            # Inference and training pipelines
+│   ├── tree_counting/        # YOLOv8 individual tree & plant detection
+│   ├── models/               # Model registry & versioning
+│   ├── train_crop_classifier.py
+│   └── run_pipeline.py       # End-to-end ML execution orchestrator
+├── tests/                    # Comprehensive Automated Test Suite (57 tests)
+│   ├── test_backend.py
+│   ├── test_production_monitoring.py
+│   ├── test_tree_counter.py
+│   ├── test_model_pipeline.py
+│   ├── test_dataset_builder.py
+│   ├── test_parcel_classifier.py
+│   ├── test_feature_loader.py
+│   ├── test_label_loader.py
+│   └── test_validation.py
+├── data/                     # Geospatial layers, parcels, database
+├── hazard/                   # Flood inundation & crop damage assessment
+├── models/                   # Serialized model weights (.joblib, .pt)
+├── postprocessing/           # Validation maps, acreage calculations, Folium map
+├── preprocessing/            # Sentinel-2 L2A preprocessing & feature extraction
+├── results/                  # Deliverables, reports, charts, maps
+├── scripts/                  # Automated data fetching & processing scripts
+├── start.bat                 # 1-Click Platform Launcher (Windows Batch)
+├── start.ps1                 # 1-Click Platform Launcher (PowerShell)
+├── requirements.txt          # Python dependencies
+└── README.md
+```
 
 ---
 
-## 🚀 Running Member 1: ML & Backend Pipeline
+## 🚀 Running the Platform
 
-1. Install dependencies:
+### 1-Click Launch (Recommended)
+- **Windows Batch**: Double-click or run [`start.bat`](file:///d:/VIT%20%282%29/VIT/start.bat)
+- **PowerShell**: Run [`start.ps1`](file:///d:/VIT%20%282%29/VIT/start.ps1)
+
+### Manual Launch
+
+1. **Install Python Dependencies:**
    ```bash
    pip install -r requirements.txt
    ```
-2. Run full automated test suite (ML + Backend, 30 tests):
+
+2. **Run Automated Test Suite (57 tests):**
    ```bash
-   pytest member1-ml/tests/ -v
+   pytest tests/ -v
    ```
-3. Run the ML model training & evaluation pipeline:
+
+3. **Start FastAPI Backend (Port 8000):**
    ```bash
-   python member1-ml/train_on_member2_data.py
+   python -m uvicorn main:app --app-dir backend --host 127.0.0.1 --port 8000 --reload
    ```
-4. Start the FastAPI backend service:
+   - API Documentation (Swagger UI): `http://127.0.0.1:8000/docs`
+   - Health Status: `http://127.0.0.1:8000/api/health`
+
+4. **Start Web GIS Frontend (Port 5173 / 5174):**
    ```bash
-   uvicorn main:app --app-dir member1-ml/backend --host 127.0.0.1 --port 8000 --reload
+   cd frontend
+   npm install
+   npm run dev
    ```
-   API interactive docs available at: `http://localhost:8000/docs`
+   - Open Web Dashboard: `http://localhost:5173` or `http://localhost:5174`
 
 ---
 
-## 🗺️ Running Member 2: GIS & Web Frontend Dashboard
+## 📊 Key Results & Model Performance
 
-1. Launch the React + Leaflet Web GIS frontend:
-   ```bash
-   cd member2-gis/frontend
-   npm run dev
-   ```
-   Open dashboard at: `http://localhost:5173`
-
-2. Run GIS validation and taluk acreage summary:
-   ```bash
-   python postprocessing/validate_classified_parcels.py
-   python postprocessing/calculate_taluk_acreage.py
-   ```
-
-3. Generate publication-quality 300 DPI classification map:
-   ```bash
-   python postprocessing/generate_classification_map.py
-   ```
-   Outputs generated in:
-   - `results/taluk_crop_acreage_summary.csv`
-   - `results/crop_statistics.csv`
-   - `results/gis_validation_report.txt`
-   - `results/validation_maps/final_crop_classification_map.png`
+| Metric | Random Forest (v1.0) | XGBoost Upgraded (v2.0) |
+|---|---|---|
+| **Test Accuracy** | **88.14%** | **91.53%** |
+| **Macro F1-Score** | **87.06%** | **91.14%** |
+| **Paddy Precision / Recall** | **92.3% / 88.9%** | **94.1% / 93.3%** |
+| **Banana Precision / Recall** | **85.7% / 87.0%** | **90.0% / 91.2%** |
+| **5-Fold Cross Validation** | **83.78%** | **87.16%** |
+| **Evaluation Strategy** | GroupShuffleSplit by Parcel ID | GroupShuffleSplit by Parcel ID |

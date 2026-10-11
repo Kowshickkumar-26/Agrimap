@@ -1,0 +1,40 @@
+{
+  "study_area_summary": {
+    "total_parcels": 2374,
+    "total_study_area_sq_km": 240.64,
+    "total_parcels_area_sq_km": 40.7441,
+    "total_parcels_area_hectares": 4074.41,
+    "overall_mean_confidence": 0.454,
+    "overall_mean_ndvi": 0.236,
+    "overall_mean_lswi": -0.011,
+    "study_area_taluks": "Ambasamudram & Cheranmahadevi",
+    "meets_min_area_requirement": true,
+    "active_model": "RandomForestClassifier_v2.0"
+  },
+  "crop_distribution": {
+    "Paddy": {
+      "parcel_count": 1574,
+      "percentage_of_parcels": 66.3,
+      "area_sq_km": 32.1724,
+      "area_hectares": 3217.24,
+      "percentage_of_total_area": 78.96,
+      "mean_confidence": 0.468
+    },
+    "Banana": {
+      "parcel_count": 530,
+      "percentage_of_parcels": 22.33,
+      "area_sq_km": 5.6774,
+      "area_hectares": 567.74,
+      "percentage_of_total_area": 13.93,
+      "mean_confidence": 0.389
+    },
+    "Other": {
+      "parcel_count": 270,
+      "percentage_of_parcels": 11.37,
+      "area_sq_km": 2.8943,
+      "area_hectares": 289.43,
+      "percentage_of_total_area": 7.1,
+      "mean_confidence": 0.499
+    }
+  }
+}

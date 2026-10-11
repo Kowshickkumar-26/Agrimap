@@ -1,0 +1,123 @@
+"""
+VIT MAPATHON — AgriMap Database Connection Manager
+Provides PostgreSQL / PostGIS connection pooling and automatic graceful fallback
+to GeoJSON and JSON artifacts when database is offline.
+"""
+
+import os
+import json
+import logging
+from typing import Optional, Dict, Any, List
+try:
+    from sqlalchemy import create_engine, text
+    from sqlalchemy.orm import sessionmaker, declarative_base
+    Base = declarative_base()
+    _sqlalchemy_available = True
+except (ImportError, Exception):
+    create_engine = None
+    text = None
+    Base = None
+    _sqlalchemy_available = False
+
+logger = logging.getLogger("DatabaseManager")
+
+# Configurable database URL
+POSTGRES_USER = os.getenv("POSTGRES_USER", "postgres")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "postgres")
+POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
+POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
+POSTGRES_DB = os.getenv("POSTGRES_DB", "postgres")
+
+DEFAULT_DB_URL = f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}"
+DATABASE_URL = os.getenv("DATABASE_URL", DEFAULT_DB_URL)
+
+_engine = None
+_SessionLocal = None
+_db_available = False
+
+
+def init_db_connection() -> bool:
+    """Tests connection to PostgreSQL/PostGIS and verifies table presence."""
+    global _engine, _SessionLocal, _db_available
+    if not _sqlalchemy_available or create_engine is None:
+        _db_available = False
+        return False
+    try:
+        engine = create_engine(DATABASE_URL, pool_pre_ping=True, connect_args={"connect_timeout": 3})
+        with engine.connect() as conn:
+            # Check if postgis extension and table exist
+            res = conn.execute(text("SELECT to_regclass('public.agricultural_parcels');")).scalar()
+            if res is not None:
+                # Check record count
+                count = conn.execute(text("SELECT COUNT(*) FROM agricultural_parcels;")).scalar()
+                if count and count > 0:
+                    _engine = engine
+                    _SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=_engine)
+                    _db_available = True
+                    logger.info(f"PostGIS database connected. Ingested parcels in DB: {count}")
+                    return True
+                else:
+                    logger.warning("Table 'agricultural_parcels' exists in DB but is empty. Using GeoJSON file fallback.")
+            else:
+                logger.info("Table 'agricultural_parcels' not found in PostGIS. Using GeoJSON file fallback.")
+    except Exception as e:
+        logger.info(f"PostGIS connection not established ({e}). Running in offline GeoJSON fallback mode.")
+
+    _db_available = False
+    return False
+
+
+def is_db_connected() -> bool:
+    """Returns True if PostGIS database is active and has parcel records."""
+    global _db_available
+    return _db_available
+
+
+def get_db():
+    """Dependency for acquiring a database session."""
+    if not is_db_connected():
+        yield None
+        return
+    db = _SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+def resolve_artifact_path(filename: str) -> Optional[str]:
+    """
+    Resolves data files across candidate paths:
+    1. Checks backend/data/<filename>
+    2. Checks outputs/<filename>
+    3. Checks data/ and results/ directories
+    """
+    backend_dir = os.path.dirname(os.path.abspath(__file__))
+    repo_root = os.path.dirname(backend_dir)
+
+    candidates = [
+        os.path.join(backend_dir, "data", filename),
+        os.path.join(repo_root, "outputs", filename),
+        os.path.join(repo_root, "results", filename),
+        os.path.join(repo_root, "results", "damage", filename),
+        os.path.join(repo_root, "results", "hazard", filename),
+        os.path.join(repo_root, "results", "tree_count", filename),
+        os.path.join(repo_root, "data", filename),
+        os.path.join(repo_root, "data", "parcels", "cleaned", filename),
+        os.path.join(backend_dir, "outputs", filename),
+    ]
+
+    for cand in candidates:
+        if os.path.exists(cand):
+            return cand
+
+    return None
+
+
+def load_json_artifact(filename: str) -> Dict[str, Any]:
+    """Loads a JSON deliverable from resolved candidate paths."""
+    path = resolve_artifact_path(filename)
+    if not path:
+        raise FileNotFoundError(f"Artifact {filename} could not be located in outputs, data, or results directories.")
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)

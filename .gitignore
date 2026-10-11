@@ -84,6 +84,8 @@ member1-ml/data/*
 !member1-ml/data/.gitkeep
 member2-gis/frontend/node_modules/
 member2-gis/frontend/dist/
+frontend/node_modules/
+frontend/dist/
 
 # IDE & Editor files
 .vscode/
